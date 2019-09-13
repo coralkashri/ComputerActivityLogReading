@@ -86,7 +86,7 @@ void show_statistics(const string &type, std::map<const string, TimeContainer> &
 }
 
 int main() {
-    string log_file_path = "/home/sherlock/message_from_computer";
+    string log_file_path = "/path/to/example_log.txt";
     ifstream log_file(log_file_path, ios::in);
 
     boost::posix_time::ptime start, stop;
