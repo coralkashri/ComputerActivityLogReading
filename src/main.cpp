@@ -6,6 +6,7 @@
 #include <chrono>
 #include "boost/date_time/gregorian/gregorian.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
+#include "utilities/design_text.h"
 
 using namespace std;
 
@@ -83,7 +84,16 @@ void show_statistics(const string &type, std::map<const string, TimeContainer> &
         if (!key.first.is_percent) {
              cout << key.first.duration;
         } else {
-            cout << key.first.duration.total_seconds() / 60. / 60. * 100. << "%"; // Transform minutes into percents
+            double percents = key.first.duration.total_seconds() / 60. / 60. * 100.; // Transform minutes into percents
+            stringstream str;
+            str << percents << "%";
+            if (percents > 60) {
+                cout << design_text::make_colored(str.str(), design_text::Color::GREEN, true);
+            } else if (percents > 50) {
+                cout << design_text::make_colored(str.str(), design_text::Color::GREEN, false);
+            } else {
+                cout << design_text::make_colored(str.str(), design_text::Color::RED, true);
+            }
         }
         cout << endl;
         durations[key.second].duration -= durations[key.second].duration; // Reset duration into 00:00:00

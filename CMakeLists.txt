@@ -19,6 +19,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*")
 
-add_executable(ComputerMonitoringStatisticsParser ${SOURCES})
+add_executable(ComputerMonitoringStatisticsParser ${SOURCES} src/utilities/design_text.cpp src/utilities/design_text.h)
 
 target_link_libraries(ComputerMonitoringStatisticsParser ${Boost_LIBRARIES})
