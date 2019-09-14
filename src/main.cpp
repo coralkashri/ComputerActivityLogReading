@@ -11,6 +11,13 @@ using namespace std;
 
 namespace boost {
     namespace date_time {
+        /**
+         * @brief Parse d/m/y h:m:s string format into boost::posix_time::ptime object
+         *
+         * @param s - date-time string with d/m/y h:m:s format
+         * @param sep - The separate char between the date and time (For example: 'd/m/y h:m:s' => ' ').
+         * @return posix_time::ptime object after parsing.
+         */
         posix_time::ptime parse_dmy_time(const std::string &s, char sep) {
             typedef typename posix_time::ptime::time_duration_type time_duration;
             typedef typename posix_time::ptime::date_type date_type;
@@ -54,17 +61,16 @@ struct TimeContainer {
 };
 
 template<typename A, typename B>
-std::pair<B,A> flip_pair(const std::pair<A,B> &p)
-{
-    return std::pair<B,A>(p.second, p.first);
+std::pair<B,A> flip_pair(const std::pair<A,B> &p) {
+    unsigned long long int a = 1;
+    return std::pair<B, A>(p.second, p.first);
 }
 
 template<typename A, typename B>
-std::multimap<B,A> flip_map(const std::map<A,B> &src)
-{
-    std::multimap<B,A> dst;
+std::multimap<B,A> flip_map(const std::map<A,B> &src) {
+    std::multimap<B, A> dst;
     std::transform(src.begin(), src.end(), std::inserter(dst, dst.begin()),
-                   flip_pair<A,B>);
+                   flip_pair<A, B>);
     return dst;
 }
 
@@ -77,16 +83,16 @@ void show_statistics(const string &type, std::map<const string, TimeContainer> &
         if (!key.first.is_percent) {
              cout << key.first.duration;
         } else {
-            cout << key.first.duration.total_seconds() / 60. / 60. * 100. << "%";
+            cout << key.first.duration.total_seconds() / 60. / 60. * 100. << "%"; // Transform minutes into percents
         }
         cout << endl;
-        durations[key.second].duration -= durations[key.second].duration;
+        durations[key.second].duration -= durations[key.second].duration; // Reset duration into 00:00:00
     }
     cout << endl << endl;
 }
 
 int main() {
-    string log_file_path = "/path/to/example_log.txt";
+    string log_file_path = "/home/sherlock/message_from_computer"; /// Path to your log file
     ifstream log_file(log_file_path, ios::in);
 
     boost::posix_time::ptime start, stop;
