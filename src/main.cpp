@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include <iomanip>
 #include <chrono>
 #include "boost/date_time/gregorian/gregorian.hpp"
@@ -121,15 +122,19 @@ int main() {
     };
     int last_week_number = -1, last_month_number = -1, last_day_number = -1;
 
-    auto end_week_calculations = [&week_durations] () {
+    /**
+     * @param current_day - Counting from 1 => Sunday = 1, Monday = 2, etc.
+     */
+    auto end_week_calculations = [&week_durations] (size_t current_day) {
         float hours_of_sleep_per_day = 8.f;
+        if (!current_day) current_day = 1; // Counting from 1 => Sunday = 1, Monday = 2, etc.
 
         // Calculate Study-day activity percents
         week_durations["Thursday hours percents from Study-day"].duration = week_durations["Thursday hours from Study-day"].duration / (boost::posix_time::time_duration(18,0,0) - boost::posix_time::time_duration(13,0,0)).hours();
         // Calculate average daily activity
-        week_durations["Daily average"].duration = week_durations["Week total"].duration / 7;
+        week_durations["Daily average"].duration = week_durations["Week total"].duration / current_day;
         // Calculate average until Wed daily activity
-        week_durations["Daily average until Wednesday"].duration = week_durations["Daily total until Wednesday"].duration / 4;
+        week_durations["Daily average until Wednesday"].duration = week_durations["Daily total until Wednesday"].duration / std::min(4, (int)current_day);
         // Calculate weekend percents
         week_durations["Weekend percents"].duration = week_durations["Weekend total"].duration / (int)(48.f - hours_of_sleep_per_day * 2.f);
     };
@@ -145,7 +150,7 @@ int main() {
                 (last_week_number != start.date().week_number() && start.date().day_of_week() != 0)) {
                 /// New week without Sunday activity
 
-                end_week_calculations();
+                end_week_calculations(7);
                 show_statistics("Week", week_durations);
             }
 
@@ -212,7 +217,7 @@ int main() {
         }
         last_month_number = start.date().month();
     }
-    end_week_calculations();
+    end_week_calculations(stop.date().day_of_week() + 1);
     show_statistics("Current week", week_durations);
 
     return 0;
