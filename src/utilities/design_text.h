@@ -6,6 +6,7 @@
 #define COMPUTERMONITORINGSTATISTICSPARSER_DESIGN_TEXT_H
 
 #include <string>
+#include <sstream>
 
 namespace design_text {
     enum class Color {
@@ -16,10 +17,13 @@ namespace design_text {
         BLUE,
         MAGENTA,
         CYAN,
-        WHITE
+        WHITE,
+        NONE
     };
 
-    std::string make_colored(const std::string &text, Color color, bool bold);
+    std::string make_colored(const std::string &text, Color fgcolor, Color bgcolor = Color::NONE, bool bold = false);
+    std::string make_colored(const std::stringstream &text, Color fgcolor, Color bgcolor = Color::NONE, bool bold = false);
+    std::string make_colored(std::basic_ostream<char> &text, Color fgcolor, Color bgcolor = Color::NONE, bool bold = false);
 }
 
 #endif //COMPUTERMONITORINGSTATISTICSPARSER_DESIGN_TEXT_H
