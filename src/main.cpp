@@ -29,7 +29,7 @@ map<string, TimeContainer> filter_times_container_by_level(TimeContainerLevel le
 }
 
 void show_statistics(TimeContainerLevel type, bool current, std::map<string, TimeContainer> &durations) {
-    cout << endl << endl;
+    cout << endl;
     string type_string = [type]() -> string {
         switch (type) {
             case DAY:
@@ -67,7 +67,6 @@ void show_statistics(TimeContainerLevel type, bool current, std::map<string, Tim
         }
         durations[key.second].duration -= durations[key.second].duration; // Reset duration into 00:00:00
     }
-//    cout << endl << endl;
 }
 
 map<string, TimeContainer> create_durations_container() {
@@ -97,7 +96,6 @@ map<string, TimeContainer> create_durations_container() {
 namespace po = boost::program_options;
 
 int main(int ac, char* av[]) {
-
     po::options_description desc("Allowed options");
     bool verbose;
     desc.add_options()
@@ -207,6 +205,7 @@ int main(int ac, char* av[]) {
                     end_month_calculations({last_year_number, last_month_number, month_end_date});
                     show_statistics(MONTH, false, durations);
                 }
+                cout << endl;
             }
         }
         if (verbose)
