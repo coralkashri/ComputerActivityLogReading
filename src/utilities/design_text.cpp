@@ -1,7 +1,3 @@
-//
-// Created by sherlock on 9/14/19.
-//
-
 #include "design_text.h"
 
 namespace design_text {

@@ -70,8 +70,18 @@ void show_statistics(TimeContainerLevel type, bool current, std::map<string, Tim
 }
 
 map<string, TimeContainer> create_durations_container() {
+
+    /* *************************************************
+     * TimeContainer
+     * Constructor:
+     * @param TimeContainerLevel container_collection   [required - DAY | WEEK | MONTH | YEAR]
+     * @param bool is_percent                           [optional - default false]
+     * @param bool hidden                               [optional - default false]
+     * @param size_t order                              [optional - default 0]
+     * *************************************************/
+
     return {
-            // Description                              Type  Percents Hidden
+            // Description                              Type    %?  Hidden
             {"Daily average",                          {DAY}},
             {"Daily average until Wednesday",          {WEEK}},
             {"Daily total until Wednesday",            {WEEK}},
