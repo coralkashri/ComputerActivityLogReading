@@ -213,6 +213,8 @@ int main(int ac, char* av[]) {
                 } else { /// New month
                     size_t month_end_date = boost::gregorian::date(last_year_number, last_month_number, 1).end_of_month().day();
                     end_month_calculations({last_year_number, last_month_number, month_end_date});
+                    show_statistics(DAY, false, durations);
+                    show_statistics(WEEK, false, durations);
                     show_statistics(MONTH, false, durations);
                 }
                 cout << endl;
