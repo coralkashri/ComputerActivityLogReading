@@ -20,6 +20,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*")
 
-add_executable(ComputerMonitoringStatisticsParser ${SOURCES})
+add_executable(ComputerMonitoringStatisticsParser ${SOURCES} src/variables.h)
 
 target_link_libraries(ComputerMonitoringStatisticsParser ${Boost_LIBRARIES})

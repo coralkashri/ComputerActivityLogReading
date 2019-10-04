@@ -27,11 +27,11 @@ namespace boost {
          * @param year - Target year to check in
          * @param month - Target month to check in
          * @param days_to_count - Days types to count (Sunday, Monday, etc.)
-         * @param day_in_month - Last day to check in the target month
+         * @param day_in_month - Last day to check in the target month (If specified, stop counting in specified day in month)
          *
-         * @return How much wanted days passed untill day_in_month in the specified month and year
+         * @return How much wanted days passed until day_in_month in the specified month and year
          */
-        size_t how_much_specific_days_past_in_month(size_t year, size_t month, std::vector<weekdays> days_to_count, size_t day_in_month);
+        size_t how_much_specific_days_past_in_month(size_t year, size_t month, std::vector<weekdays> days_to_count, size_t day_in_month = 32);
     }
 }
 

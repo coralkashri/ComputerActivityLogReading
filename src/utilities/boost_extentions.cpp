@@ -17,9 +17,9 @@ namespace boost {
             std::string date_string, tod_string;
             split(s, sep, date_string, tod_string);
             //call parse_date with first string
-            date_type d = parse_date<date_type>(date_string, ymd_order_dmy);
+            auto d = parse_date<date_type>(date_string, ymd_order_dmy);
             //call parse_time_duration with remaining string
-            time_duration td = parse_delimited_time_duration<time_duration>(tod_string);
+            auto td = parse_delimited_time_duration<time_duration>(tod_string);
             //construct a time
             return {d, td};
         }

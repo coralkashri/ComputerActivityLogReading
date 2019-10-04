@@ -13,6 +13,7 @@
 #include "utilities/boost_extentions.h"
 #include "utilities/design_text.h"
 #include "TimeContainer.h"
+#include "variables.h"
 
 using namespace std;
 using namespace design_text;
@@ -103,6 +104,15 @@ map<string, TimeContainer> create_durations_container() {
     };
 }
 
+base_variables init_variables() {
+    return {
+            .study_day_hours_in_week = (size_t) (boost::posix_time::time_duration(18, 0, 0) -
+                                                 boost::posix_time::time_duration(13, 0, 0)).hours(),
+            .sleep_hours_per_day = 8.f,
+            .hours_per_day = 24.f
+    };
+}
+
 namespace po = boost::program_options;
 
 int main(int ac, char* av[]) {
@@ -128,14 +138,14 @@ int main(int ac, char* av[]) {
     boost::posix_time::ptime start, stop;
     string datetime;
 
-    map<string, TimeContainer> durations = create_durations_container();
-    size_t study_day_hours_in_week = (boost::posix_time::time_duration(18,0,0) - boost::posix_time::time_duration(13,0,0)).hours();
+    auto base_vars = init_variables();
+    auto durations = create_durations_container();
     int last_week_number = -1, last_month_number = -1, last_year_number = -1, last_day_number = -1;
 
     /**
      * @param current_day - Counting from 1 => Sunday = 1, Monday = 2, etc.
      */
-    auto end_week_calculations = [&durations, verbose, &stop, &start, study_day_hours_in_week] (size_t current_day) mutable {
+    auto end_week_calculations = [&durations, verbose, &stop, &start, base_vars] (size_t current_day) mutable {
         if (!verbose) {
             auto previous_start_date = (stop - (boost::posix_time::time_duration(24, 0, 0) * (current_day - 1)));
             if (stop.date().day_of_week() == start.date().day_of_week()) {
@@ -149,18 +159,17 @@ int main(int ac, char* av[]) {
             cout << "\n" << make_colored(stringstream() << previous_start_date.date() << " - " << previous_stop_date.date() << ":", Color::NONE, Color::CYAN, true);
         }
 
-        float hours_of_sleep_per_day = 8.f;
         if (!current_day) current_day = 1; // Counting from 1 => Sunday = 1, Monday = 2, etc.
 
         /// Week
         // Calculate Study-day activity percents
-        durations["Thursday hours percents from Study-day"].duration = durations["Thursday hours from Study-day"].duration / study_day_hours_in_week;
+        durations["Thursday hours percents from Study-day"].duration = durations["Thursday hours from Study-day"].duration / base_vars.study_day_hours_in_week;
         // Calculate average daily activity
         durations["Daily average"].duration = durations["Week total"].duration / current_day;
         // Calculate average until Wed daily activity
         durations["Daily average until Wednesday"].duration = durations["Daily total until Wednesday"].duration / std::min(4, (int)current_day);
         // Calculate weekend percents
-        durations["Weekend percents"].duration = durations["Weekend total"].duration / (int)(48.f - hours_of_sleep_per_day * 2.f);
+        durations["Weekend percents"].duration = durations["Weekend total"].duration / (int)((base_vars.hours_per_day - base_vars.sleep_hours_per_day) * 2.f);
 
         /// Month
         // Calculate average week percents in the current month
@@ -175,7 +184,7 @@ int main(int ac, char* av[]) {
      *          month - current month
      *          year - current year
      */
-    auto end_month_calculations = [&durations, study_day_hours_in_week, verbose] (boost::gregorian::date::ymd_type data) mutable {
+    auto end_month_calculations = [&durations, base_vars, verbose] (boost::gregorian::date::ymd_type data) mutable {
         if (!verbose) {
             cout << "\n" << make_colored(stringstream()
                                                  << boost::gregorian::date(data.year, data.month, 1)
@@ -190,8 +199,13 @@ int main(int ac, char* av[]) {
         // Finish calculate current month week percents average
         durations["Month week percents average"].duration /= current_week_in_month;
         // Calculate month Study-day usage percents
-        durations["Month Study-day percents"].duration = durations["Month Study-day total"].duration /
-                (study_day_hours_in_week * boost::date_time::how_much_specific_days_past_in_month(data.year, data.month, {boost::date_time::weekdays::Thursday}, data.day));
+        auto study_days_until_now_in_month = boost::date_time::how_much_specific_days_past_in_month(data.year,
+                                                                                                    data.month,
+                                                                                                    {boost::date_time::weekdays::Thursday},
+                                                                                                    data.day);
+        auto study_day_hours_in_month = base_vars.study_day_hours_in_week * study_days_until_now_in_month;
+        durations["Month Study-day percents"].duration =
+                durations["Month Study-day total"].duration / study_day_hours_in_month;
     };
 
     while (std::getline(log_file, datetime, '+')) {
