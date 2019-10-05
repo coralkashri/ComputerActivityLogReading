@@ -1,4 +1,5 @@
 #include "boost_extentions.h"
+#include <boost/date_time/time_parsing.hpp>
 
 namespace boost {
     namespace date_time {

@@ -6,7 +6,6 @@
 #define COMPUTERMONITORINGSTATISTICSPARSER_BOOST_EXTENTIONS_H
 
 #include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/date_time/time_parsing.hpp>
 
 namespace boost {
     namespace date_time {
