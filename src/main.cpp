@@ -16,7 +16,7 @@ int main(int ac, char* av[]) {
             ;
     auto log_group = po::options_description("Logger Options");
     log_group.add_options()
-            ("log-path", po::value<string>(&log_file_path)->default_value("/home/sherlock/message_from_computer"), "Path to login/logout logger.")
+            ("log-path", po::value<string>(&log_file_path)->default_value("/home/sherlock/message_from_computer_DEBUG"), "Path to login/logout logger.")
             ;
     auto anomalies_group = po::options_description("Anomalies Detector Options");
     anomalies_group.add_options()
@@ -26,7 +26,7 @@ int main(int ac, char* av[]) {
 
     desc.add(log_group);
     desc.add(anomalies_group);
-    
+
     po::variables_map vm;
     po::store(po::parse_command_line(ac, av, desc), vm);
     po::notify(vm);
