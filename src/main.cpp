@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include "core/log_handler.h"
 
 using namespace std;
@@ -16,7 +17,7 @@ int main(int ac, char* av[]) {
             ;
     auto log_group = po::options_description("Logger Options");
     log_group.add_options()
-            ("log-path", po::value<string>(&log_file_path)->default_value("/home/sherlock/message_from_computer_DEBUG"), "Path to login/logout logger.")
+            ("log-path", po::value<string>(&log_file_path)->default_value("/home/sherlock/message_from_computer"), "Path to login/logout logger.")
             ;
     auto anomalies_group = po::options_description("Anomalies Detector Options");
     anomalies_group.add_options()
@@ -34,6 +35,10 @@ int main(int ac, char* av[]) {
     if (vm.count("help")) {
         cout << desc << "\n";
         return 1;
+    }
+
+    if (!boost::filesystem::exists(log_file_path)) {
+        throw std::runtime_error("Log file path doesn't exist.");
     }
 
     if (!anomaly_detection) {

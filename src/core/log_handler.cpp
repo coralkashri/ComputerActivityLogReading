@@ -120,6 +120,7 @@ namespace log_handler {
         ifstream log_file(log_path, ios::in);
 
         boost::posix_time::ptime start, stop;
+        boost::posix_time::ptime start_week_date;
         string datetime;
 
         auto base_vars = init_variables();
@@ -129,42 +130,12 @@ namespace log_handler {
         /**
          * @param current_day - Counting from 1 => Sunday = 1, Monday = 2, etc.
          */
-        auto end_week_calculations = [&durations, verbose, &stop, &start, base_vars] (size_t current_day) mutable {
+        auto end_week_calculations = [&durations, verbose, &start_week_date, base_vars] (size_t current_day) mutable {
             if (!verbose) {
-                /* stop - usually inside the current calculated week.
-                 * Example:
-                 * Sun     Mon     Tue     Wed     Thu     Fri     Sat     Sun     Mon
-                 * 1.9  |  2.9  |  3.9  |  4.9  |  5.9  |  6.9  |  7.9  |  8.9  |  9.9
-                 *                                                          ^
-                 *                                                          |       .
-                 *                                                         stop ->... & current_day == 7
-                 *                                                  ^
-                 *                                                  |
-                 *                                           ...<- stop & current_day <= 7
-                 *
-                 *
-                 * start - date **after** the calculated week.
-                 * Example:
-                 * Sun     Mon     Tue     Wed     Thu     Fri     Sat     Sun     Mon
-                 * 1.9  |  2.9  |  3.9  |  4.9  |  5.9  |  6.9  |  7.9  |  8.9  |  9.9
-                 *                                                          ^
-                 *                                                          |
-                 *                                                        start ->... & current_day == 7
-                 *                                                  ^
-                 *                                                  |
-                 *                                           ...<- start & current_day <= 7
-                 *
-                */
-                auto previous_start_date = (stop - (boost::posix_time::time_duration(24, 0, 0) * (current_day - 1)));
-                if (stop.date().day_of_week() == start.date().day_of_week()) { // todo: Comment
-                    previous_start_date -= boost::posix_time::time_duration(24, 0, 0);
-                }
-                if (previous_start_date.date().day_of_week() != boost::date_time::weekdays::Sunday) { // todo: Comment
-                    previous_start_date += boost::posix_time::time_duration(24, 0, 0) * (7 - previous_start_date.date().day_of_week());
-                }
-                /*if (current_day < 7) { // todo: Comment + check if necessary - relevant only for current days calculations
-                    previous_start_date += boost::posix_time::time_duration(24, 0, 0);
-                }*/
+                auto previous_start_date = start_week_date;
+                // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
+                previous_start_date -= boost::posix_time::time_duration(24, 0, 0) *
+                                       (previous_start_date.date().day_of_week() - boost::date_time::weekdays::Sunday);
                 auto previous_stop_date = (previous_start_date + (boost::posix_time::time_duration(24, 0, 0) * 7));
                 stringstream s;
                 cout << "\n" << make_colored(stringstream() << previous_start_date.date() << " - " << previous_stop_date.date() << ":", Color::NONE, Color::CYAN, true);
@@ -220,20 +191,22 @@ namespace log_handler {
         };
 
         /*
-         * Flow:
-         *
-         * ------------------           -------------       ---------------------           ----------------------------
-         * New line in file | --true--> | Get start | ----> | start is new week | --true--> | end_week_calculations(7) |
-         * ------------------           -------------       ---------------------           ----------------------------
-         *       |                                                 |                            /
-         *     false                                             false        ,----------------"
-         *       |                                                 |          |
-         *       V                                                 V          V
-         * -------------------                            -----------------------
-         * Calculate current |                            |     Get stop &      |
-         *    Week & Month   |                            | Calculate durations |
-         * -------------------                            -----------------------
+         * Flow:  -------------------------------------------------------------------------------------------------------------------
+         *        |                                                                                                                 |
+         *        V                                                                                                                 |
+         * ------------------           -------------       ---------------------           ----------------------------            |
+         * New line in file | --true--> | Get start | ----> | start is new week | --true--> | end_week_calculations(7) |            |
+         * ------------------           -------------       ---------------------           ----------------------------            |
+         *       |                                                 |                            /                                   |
+         *     false                                             false        ,----------------"                                    |
+         *       |                                                 |          |                                                     |
+         *       V                                                 V          V                                                     |
+         * -------------------                            --------------------------       -----------------------                  |
+         * Calculate current |                            | Update start_week_date | ----> | Calculate durations | ----> -----------|
+         *    Week & Month   |                            |      & Get stop        |       -----------------------
+         * -------------------                            --------------------------
          */
+
 
         while (std::getline(log_file, datetime, '+')) {
             /// Read date-time from log
@@ -258,8 +231,12 @@ namespace log_handler {
                         show_statistics(WEEK, false, durations);
                         show_statistics(MONTH, false, durations);
                     }
+
+                    start_week_date = start; // Reserve new week start
                     cout << endl;
                 }
+            } else {
+                start_week_date = start; // Reserve new week start
             }
             if (verbose)
                 cout << start << " - ";
