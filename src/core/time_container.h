@@ -11,16 +11,16 @@ enum TimeContainerLevel {
     YEAR = 3
 };
 
-struct TimeContainer {
+struct time_container {
 
     /// Constructors
-    TimeContainer() = default;
+    time_container() = default;
 
-    TimeContainer(TimeContainerLevel container_collection, bool is_percent = false, bool hidden = false, size_t order = 0);
+    time_container(TimeContainerLevel container_collection, bool is_percent = false, bool hidden = false, size_t order = 0);
 
-    TimeContainer(const TimeContainer &ref) = default;
+    time_container(const time_container &ref) = default;
 
-    TimeContainer &operator=(const TimeContainer &ref) = default;
+    time_container &operator=(const time_container &ref) = default;
 
     /// Member variables
     static size_t time_containers_count;
@@ -31,11 +31,11 @@ struct TimeContainer {
     boost::posix_time::time_duration duration;
 
     /// Functions
-    bool operator<(const TimeContainer &ref) const;
+    bool operator<(const time_container &ref) const;
 
-    bool operator>(const TimeContainer &ref) const;
+    bool operator>(const time_container &ref) const;
 
-    bool operator==(const TimeContainer &ref) const;
+    bool operator==(const time_container &ref) const;
 };
 
 #endif //COMPUTERMONITORINGSTATISTICSPARSER_TIMECONTAINER_H

@@ -13,16 +13,17 @@
 #include "../utilities/std_extentions.h"
 #include "../utilities/boost_extentions.h"
 #include "../utilities/design_text.h"
-#include "../TimeContainer.h"
-#include "../variables.h"
+#include "time_container.h"
+#include "variables.h"
+
+using namespace std;
+using namespace design_text;
 
 namespace log_handler {
+    boost::date_time::weekdays week_start_day;
 
-    using namespace std;
-    using namespace design_text;
-
-    map<string, TimeContainer> filter_times_container_by_level(TimeContainerLevel level, map<string, TimeContainer> &durations) {
-        map<string, TimeContainer> filtered_durations;
+    map<string, time_container> filter_times_container_by_level(TimeContainerLevel level, map<string, time_container> &durations) {
+        map<string, time_container> filtered_durations;
         for_each(durations.begin(), durations.end(),
                  [level, filtered = &filtered_durations](auto const &t) mutable {
                      if (t.second.container_collection == level) {
@@ -32,7 +33,7 @@ namespace log_handler {
         return filtered_durations;
     }
 
-    void show_statistics(TimeContainerLevel type, bool current, std::map<string, TimeContainer> &durations) {
+    void show_statistics(TimeContainerLevel type, bool current, std::map<string, time_container> &durations) {
         cout << endl;
         string type_string = [type]() -> string {
             switch (type) {
@@ -48,7 +49,7 @@ namespace log_handler {
         }();
         type_string = current ? "Current " + type_string : type_string;
         cout << "~~~ " << type_string << " statistics ~~~" << endl;
-        std::multimap<TimeContainer, string> sort_by_durations = flip_map<string, TimeContainer>(filter_times_container_by_level(type, durations));
+        std::multimap<time_container, string> sort_by_durations = flip_map<string, time_container>(filter_times_container_by_level(type, durations));
         for (auto key : sort_by_durations) {
             if (!key.first.hidden) {
                 cout << key.second << ": ";
@@ -73,10 +74,10 @@ namespace log_handler {
         }
     }
 
-    map<string, TimeContainer> create_durations_container() {
+    map<string, time_container> create_durations_container() {
 
         /* *************************************************
-         * TimeContainer
+         * time_container
          * Constructor:
          * @param TimeContainerLevel container_collection   [required - DAY | WEEK | MONTH | YEAR]
          * @param bool is_percent                           [optional - default false]
@@ -120,38 +121,45 @@ namespace log_handler {
         ifstream log_file(log_path, ios::in);
 
         boost::posix_time::ptime start, stop;
-        boost::posix_time::ptime start_week_date;
+        boost::posix_time::ptime first_active_date_in_week, start_week_date, end_week_date;
         string datetime;
 
         auto base_vars = init_variables();
         auto durations = create_durations_container();
-        int last_week_number = -1, last_month_number = -1, last_year_number = -1, last_day_number = -1;
+        int last_week_number,
+                last_month_number = -1,
+                last_year_number = -1,
+                last_day_number;
 
         /**
          * @param current_day - Counting from 1 => Sunday = 1, Monday = 2, etc.
          */
-        auto end_week_calculations = [&durations, verbose, &start_week_date, base_vars] (size_t current_day) mutable {
+        auto end_week_calculations = [&durations, verbose, &start_week_date, &end_week_date, base_vars](
+                size_t current_day) mutable {
             if (!verbose) {
-                auto previous_start_date = start_week_date;
-                // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
-                previous_start_date -= boost::posix_time::time_duration(24, 0, 0) *
-                                       (previous_start_date.date().day_of_week() - boost::date_time::weekdays::Sunday);
-                auto previous_stop_date = (previous_start_date + (boost::posix_time::time_duration(24, 0, 0) * 7));
+                //auto previous_start_date = start_week_date;
+                //auto previous_stop_date = (previous_start_date + (boost::posix_time::time_duration(24, 0, 0) * 7));
                 stringstream s;
-                cout << "\n" << make_colored(stringstream() << previous_start_date.date() << " - " << previous_stop_date.date() << ":", Color::NONE, Color::CYAN, true);
+                cout << "\n"
+                     << make_colored(stringstream() << start_week_date.date() << " - " << end_week_date.date() << ":",
+                                     Color::NONE, Color::CYAN, true);
             }
 
             if (!current_day) current_day = 1; // Counting from 1 => Sunday = 1, Monday = 2, etc.
 
             /// Week
             // Calculate Study-day activity percents
-            durations["Thursday hours percents from Study-day"].duration = durations["Thursday hours from Study-day"].duration / base_vars.study_day_hours_in_week;
+            durations["Thursday hours percents from Study-day"].duration =
+                    durations["Thursday hours from Study-day"].duration / base_vars.study_day_hours_in_week;
             // Calculate average daily activity
             durations["Daily average"].duration = durations["Week total"].duration / current_day;
             // Calculate average until Wed daily activity
-            durations["Daily average until Wednesday"].duration = durations["Daily total until Wednesday"].duration / std::min(4, (int)current_day);
+            durations["Daily average until Wednesday"].duration =
+                    durations["Daily total until Wednesday"].duration / std::min(4, (int) current_day);
             // Calculate weekend percents
-            durations["Weekend percents"].duration = durations["Weekend total"].duration / (int)((base_vars.hours_per_day - base_vars.sleep_hours_per_day) * 2.f);
+            durations["Weekend percents"].duration = durations["Weekend total"].duration /
+                                                     (int) ((base_vars.hours_per_day - base_vars.sleep_hours_per_day) *
+                                                            2.f);
 
             /// Month
             // Calculate average week percents in the current month
@@ -166,7 +174,7 @@ namespace log_handler {
          *          month - current month
          *          year - current year
          */
-        auto end_month_calculations = [&durations, base_vars, verbose] (boost::gregorian::date::ymd_type data) mutable {
+        auto end_month_calculations = [&durations, base_vars, verbose](boost::gregorian::date::ymd_type data) mutable {
             if (!verbose) {
                 cout << "\n" << make_colored(stringstream()
                                                      << boost::gregorian::date(data.year, data.month, 1)
@@ -216,9 +224,7 @@ namespace log_handler {
             if (last_month_number != -1) {
                 /// Ignore calculations on the very first line in the file
 
-                if ((start.date().day_of_week() == 0 && last_day_number != 0) || /// Sunday activity - new week
-                    (last_week_number != start.date().week_number() && start.date().day_of_week() != 0)) { /// New week without Sunday activity
-
+                if (start.date() >= end_week_date.date()) {
                     end_week_calculations(7);
 
                     if (last_month_number == start.date().month()) {
@@ -232,11 +238,19 @@ namespace log_handler {
                         show_statistics(MONTH, false, durations);
                     }
 
-                    start_week_date = start; // Reserve new week start
+                    first_active_date_in_week = start; // Preserve new week start active date
+                    // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
+                    start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
+                                              (start.date().day_of_week() - week_start_day + (start.date().day_of_week() - week_start_day < 0 ? 7 : 0));
+                    end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7;
                     cout << endl;
                 }
             } else {
-                start_week_date = start; // Reserve new week start
+                first_active_date_in_week = start; // Preserve new week start active date
+                // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
+                start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
+                                          (start.date().day_of_week() - week_start_day + (start.date().day_of_week() - week_start_day < 0 ? 7 : 0));
+                end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7; // Calculate week's end date
             }
             if (verbose)
                 cout << start << " - ";

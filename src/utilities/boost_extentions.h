@@ -1,10 +1,7 @@
-//
-// Created by sherlock on 9/20/19.
-//
-
 #ifndef COMPUTERMONITORINGSTATISTICSPARSER_BOOST_EXTENTIONS_H
 #define COMPUTERMONITORINGSTATISTICSPARSER_BOOST_EXTENTIONS_H
 
+#include <vector>
 #include <boost/date_time/posix_time/ptime.hpp>
 
 namespace boost {
