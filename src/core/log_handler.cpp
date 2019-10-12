@@ -330,9 +330,38 @@ namespace log_handler {
         //}
     }
 
-    bool anomalies_detector(std::string log_path) {
+    bool anomalies_detector(std::string log_path, std::string normal_login_word, bool show_details) {
         bool anomaly_detected = false;
+        ostream temp(nullptr); // Don't produce anomalies details message
+        std::ostream &anomalies_output = show_details ? std::cout : temp;
 
+        ifstream log_file(log_path, ios::in);
+        string datetime, description_part;
+        string prev_line;
+        bool is_login_line_turn = true;
+        size_t line_number = 0;
+        while (std::getline(log_file, datetime, '+')) {
+            line_number++;
+            std::getline(log_file, description_part, '\n');
+            if (auto place_of_login_word = description_part.find(normal_login_word);
+                    (is_login_line_turn && place_of_login_word == string::npos) ||
+                    (!is_login_line_turn && place_of_login_word != string::npos)) {
+
+                if (!anomaly_detected) { /// First anomaly - print anomalies title
+                    anomalies_output << "Anomalies:" << endl;
+                }
+
+                anomalies_output << make_colored(stringstream() << "Line " << (line_number - 1) << ": "
+                                                                << prev_line, Color::GREEN) << endl;
+                anomalies_output << make_colored(stringstream() << "Line " << line_number << ": "
+                                                                << datetime << "+" << description_part,
+                                                 Color::RED, Color::NONE, true) << endl << endl;
+                anomaly_detected = true;
+                is_login_line_turn = !is_login_line_turn;
+            }
+            is_login_line_turn = !is_login_line_turn;
+            prev_line = datetime + "+" + description_part;
+        }
         return anomaly_detected;
     }
 };
