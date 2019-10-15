@@ -3,13 +3,6 @@
 
 namespace boost {
     namespace date_time {
-        /**
-         * @brief Parse d/m/y h:m:s string format into boost::posix_time::ptime object
-         *
-         * @param s - date-time string with d/m/y h:m:s format
-         * @param sep - The separate char between the date and time (For example: 'd/m/y h:m:s' => ' ').
-         * @return posix_time::ptime object after parsing.
-         */
         posix_time::ptime parse_dmy_time(const std::string &s, char sep) {
             typedef typename posix_time::ptime::time_duration_type time_duration;
             typedef typename posix_time::ptime::date_type date_type;
