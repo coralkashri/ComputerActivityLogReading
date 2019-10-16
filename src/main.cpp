@@ -35,7 +35,7 @@ int main(int ac, char* av[]) {
             cmd_basic_data.anomaly_detection,
             cmd_basic_data.normal_login_word
     );
-    log_analyzer.set_week_start_day(cmd_progress_data.week_start_day);
+    log_analyzer.config_analyzer_params(cmd_progress_data.week_start_day, cmd_basic_data.sleep_hours_per_day, cmd_basic_data.study_hours_in_week);
 
     /// Log handler process
     log_analyzer.process();

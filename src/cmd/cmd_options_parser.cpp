@@ -58,9 +58,9 @@ boost_cmd_po::options_description cmd_options_parser::init_cmd_po_logger_options
 }
 
 boost_cmd_po::options_description cmd_options_parser::init_cmd_po_hidden_options() {
-    auto group = boost_cmd_po::options_description("Logger options");
+    auto group = boost_cmd_po::options_description("Hidden options");
     group.add_options()
-            ("log-path,l", boost_cmd_po::value<std::string>(&_options_data.log_file_path)->default_value( "/home/sherlock/message_from_computer"), "Path to login/logout logger.");
+            ("log-path,l", boost_cmd_po::value<std::string>(&_options_data.log_file_path)->default_value("/home/sherlock/message_from_computer"), "Path to login/logout logger.");
     return group;
 }
 
@@ -68,6 +68,8 @@ boost_cmd_po::options_description cmd_options_parser::init_cmd_po_mode_options()
     auto group = boost_cmd_po::options_description("Mode options");
     group.add_options()
             ("no-analyze", "Disable activity analyzing - don't show activity times/summarise.")
+            ("sleep-hours-in-day", boost_cmd_po::value<float>(&_options_data.sleep_hours_per_day)->default_value(8.f), "Analyzer config param - Expected amount of hours.")
+            ("study-hours-in-week", boost_cmd_po::value<float>(&_options_data.study_hours_in_week)->default_value(5.f), "Analyzer config param - Expected amount of hours.")
             ("anomaly-detection", "Check for anomalies in logger.")
             ("normal-login-word", boost_cmd_po::value<std::string>(&_options_data.normal_login_word)->default_value("login"), "For anomaly detector- word that should symbol a login line in login/logout logger (after '+' sign).");
     return group;
