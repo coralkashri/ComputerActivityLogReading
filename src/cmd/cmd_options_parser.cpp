@@ -92,7 +92,7 @@ void cmd_options_parser::apply_program_options(int ac, char **av) {
 
 void cmd_options_parser::update_flags() {
     _options_data.help              = (bool) _options_data.variables_map.count("help");
-    _options_data.analyze_verbose           = (bool) _options_data.variables_map.count("verbose");
+    _options_data.analyze_verbose   = (bool) _options_data.variables_map.count("verbose");
     _options_data.analyze_activity  = !(bool) _options_data.variables_map.count("no-analyze");
     _options_data.anomaly_detection = (bool) _options_data.variables_map.count("anomaly-detection");
 }
