@@ -13,8 +13,6 @@ public:
      */
     explicit week();
 
-    ~week() {}
-
     /**
      * @brief Prints days list
      */

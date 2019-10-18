@@ -189,7 +189,7 @@ void activity_analyzer::analyze() const {
         log_file.ignore(256, '\n');
         start = boost::date_time::extract_datetime(datetime);
 
-        if (is_first_line) { /// Ignore calculations on the very first line in the file
+        if (!is_first_line) { /// Ignore calculations on the very first line in the file
             if (start.date() >= end_week_date.date()) {
                 update_durations_week_ending(durations, start_week_date, 7);
 
