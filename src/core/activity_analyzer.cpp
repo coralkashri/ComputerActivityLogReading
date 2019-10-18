@@ -115,7 +115,7 @@ std::map<std::string, time_container> activity_analyzer::create_durations_contai
 }
 
 void activity_analyzer::init_global_world_variables() {
-    analyze_properties.hours_per_day = 24.f;
+    analyze_properties.hours_per_day = 24;
 }
 
 void activity_analyzer::update_durations_week_ending(std::map<std::string, time_container> &durations, boost::posix_time::ptime start_week_date, size_t current_day) const {
@@ -136,7 +136,7 @@ void activity_analyzer::update_durations_week_ending(std::map<std::string, time_
     // Calculate average until Wed daily activity
     durations["Daily average until Wednesday"].duration = durations["Daily total until Wednesday"].duration / std::min(4, (int) current_day);
     // Calculate weekend percents
-    durations["Weekend percents"].duration = durations["Weekend total"].duration / (int) ((analyze_properties.hours_per_day - analyze_properties.sleep_hours_per_day) * 2.f);
+    durations["Weekend percents"].duration = durations["Weekend total"].duration / ((analyze_properties.hours_per_day - analyze_properties.sleep_hours_per_day) * 2);
 
     /// Month
     // Calculate average week percents in the current month
@@ -167,18 +167,22 @@ void activity_analyzer::analyze() const {
     std::ifstream log_file(log_path, std::ios::in);
 
     time_var start, stop;
-    //time_var first_active_date_in_week;
     time_var start_week_date;
     time_var end_week_date;
     std::string datetime;
 
     std::map<std::string, time_container> durations = create_durations_container();
-    //unsigned short int last_week_number;
     u_short last_month_number;
     u_short last_year_number;
-    //unsigned short int last_day_number;
     last_month_number = last_year_number = 0;
     bool is_first_line = true;
+
+    auto update_week_start_stop_date = [&start, wsd = analyze_properties.week_start_day, &start_week_date, &end_week_date] {
+        // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
+        start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
+                                  (start.date().day_of_week() - wsd + (start.date().day_of_week() - wsd < 0 ? 7 : 0));
+        end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7; // Calculate week's end date
+    };
 
     while (std::getline(log_file, datetime, '+')) {
         /// Read date-time from log
@@ -199,20 +203,11 @@ void activity_analyzer::analyze() const {
                     show_statistics(WEEK, false, durations);
                     show_statistics(MONTH, false, durations);
                 }
-
-                //first_active_date_in_week = start; // Preserve new week start active date
-                // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
-                start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
-                                          (start.date().day_of_week() - analyze_properties.week_start_day + (start.date().day_of_week() - analyze_properties.week_start_day < 0 ? 7 : 0));
-                end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7;
+                update_week_start_stop_date();
                 std::cout << std::endl;
             }
         } else {
-            //first_active_date_in_week = start; // Preserve new week start active date
-            // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
-            start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
-                                      (start.date().day_of_week() - analyze_properties.week_start_day + (start.date().day_of_week() - analyze_properties.week_start_day < 0 ? 7 : 0));
-            end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7; // Calculate week's end date
+            update_week_start_stop_date();
         }
         detailed_streamer << start << " - ";
         boost::posix_time::time_duration difference;
@@ -271,11 +266,6 @@ void activity_analyzer::analyze() const {
         durations["Week total"].duration += difference;
         durations["Month total"].duration += difference;
 
-        /*last_week_number = start.date().week_number();
-        last_day_number = start.date().day_of_week();
-        if (last_day_number == 0) {
-            last_week_number++;
-        }*/
         last_month_number = start.date().month();
         last_year_number = start.date().year();
         is_first_line = false;
@@ -284,10 +274,8 @@ void activity_analyzer::analyze() const {
     update_durations_week_ending(durations, start_week_date, stop.date().day_of_week() + 1);
     show_statistics(DAY, true, durations);
     show_statistics(WEEK, true, durations);
-    //if (last_month_number != start.date().month()) { /// New month
     update_durations_month_ending(durations, {last_year_number, last_month_number, stop.date().day()});
     show_statistics(MONTH, true, durations);
-    //}
 }
 
 void activity_analyzer::config_analyze_params(boost::date_time::weekdays week_start_day, u_short sleep_hours_per_day, u_short study_day_hours_in_week) {
