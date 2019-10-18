@@ -23,7 +23,7 @@ struct time_container {
     time_container &operator=(const time_container &ref) = default;
 
     /// Member variables
-    static size_t time_containers_count;
+    static size_t time_containers_count; // Used for automatic order
     size_t order;
     TimeContainerLevel container_collection;
     bool is_percent;

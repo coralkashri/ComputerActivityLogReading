@@ -26,7 +26,7 @@ log_handler::log_handler(bool analyze_verbose,
           detector(log_path, anomalies_verbose, normal_login_word) {
 }
 
-void log_handler::config_analyzer_params(boost::date_time::weekdays week_start_day, float sleep_hours_per_day, float study_day_hours_in_week) {
+void log_handler::config_analyzer_params(boost::date_time::weekdays week_start_day, u_short sleep_hours_per_day, u_short study_day_hours_in_week) {
     analyzer.config_analyze_params(week_start_day, sleep_hours_per_day, study_day_hours_in_week);
 }
 

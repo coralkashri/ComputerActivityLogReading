@@ -68,8 +68,8 @@ boost_cmd_po::options_description cmd_options_parser::init_cmd_po_mode_options()
     auto group = boost_cmd_po::options_description("Mode options");
     group.add_options()
             ("no-analyze", "Disable activity analyzing - don't show activity times/summarise.")
-            ("sleep-hours-in-day", boost_cmd_po::value<float>(&_options_data.sleep_hours_per_day)->default_value(8.f), "Analyzer config param - Expected amount of hours.")
-            ("study-hours-in-week", boost_cmd_po::value<float>(&_options_data.study_hours_in_week)->default_value(5.f), "Analyzer config param - Expected amount of hours.")
+            ("sleep-hours-in-day", boost_cmd_po::value<u_short>(&_options_data.sleep_hours_per_day)->default_value(8), "Analyzer config param - Expected amount of hours.")
+            ("study-hours-in-week", boost_cmd_po::value<u_short>(&_options_data.study_hours_in_week)->default_value(5), "Analyzer config param - Expected amount of hours.")
             ("anomaly-detection", "Check for anomalies in logger.")
             ("normal-login-word", boost_cmd_po::value<std::string>(&_options_data.normal_login_word)->default_value("login"), "For anomaly detector- word that should symbol a login line in login/logout logger (after '+' sign).");
     return group;

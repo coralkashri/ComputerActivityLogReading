@@ -15,6 +15,7 @@
 #include "../utilities/design_text.h"
 
 using namespace design_text;
+using time_var = boost::posix_time::ptime;
 
 activity_analyzer::activity_analyzer(bool verbose, const std::string &log_path)
         :
@@ -48,6 +49,8 @@ void activity_analyzer::show_statistics(TimeContainerLevel type, bool current, s
                 return "Month";
             case YEAR:
                 return "Year";
+            default:
+                return "Unknown";
         }
     }();
     type_string = current ? "Current " + type_string : type_string;
@@ -155,30 +158,34 @@ void activity_analyzer::update_durations_month_ending(std::map<std::string, time
     // Finish calculate current month week percents average
     durations["Month week percents average"].duration /= current_week_in_month;
     // Calculate month Study-day usage percents
-    auto study_days_until_now_in_month = boost::date_time::how_much_specific_days_past_in_month(data.year, data.month, {boost::date_time::weekdays::Thursday}, data.day);
-    auto study_day_hours_in_month = analyze_properties.study_day_hours_in_week * study_days_until_now_in_month;
+    u_short study_days_until_now_in_month = boost::date_time::how_much_specific_days_past_in_month(data.year, data.month, {boost::date_time::weekdays::Thursday}, data.day);
+    u_short study_day_hours_in_month = analyze_properties.study_day_hours_in_week * study_days_until_now_in_month;
     durations["Month Study-day percents"].duration = durations["Month Study-day total"].duration / study_day_hours_in_month;
 }
 
 void activity_analyzer::analyze() const {
     std::ifstream log_file(log_path, std::ios::in);
 
-    boost::posix_time::ptime start, stop;
-    boost::posix_time::ptime first_active_date_in_week, start_week_date, end_week_date;
+    time_var start, stop;
+    //time_var first_active_date_in_week;
+    time_var start_week_date;
+    time_var end_week_date;
     std::string datetime;
 
     std::map<std::string, time_container> durations = create_durations_container();
-    int last_week_number;
-    int last_month_number = -1;
-    int last_year_number = -1;
-    int last_day_number;
+    //unsigned short int last_week_number;
+    u_short last_month_number;
+    u_short last_year_number;
+    //unsigned short int last_day_number;
+    last_month_number = last_year_number = 0;
+    bool is_first_line = true;
 
     while (std::getline(log_file, datetime, '+')) {
         /// Read date-time from log
         log_file.ignore(256, '\n');
         start = boost::date_time::extract_datetime(datetime);
 
-        if (last_month_number != -1) { /// Ignore calculations on the very first line in the file
+        if (is_first_line) { /// Ignore calculations on the very first line in the file
             if (start.date() >= end_week_date.date()) {
                 update_durations_week_ending(durations, start_week_date, 7);
 
@@ -186,14 +193,14 @@ void activity_analyzer::analyze() const {
                     show_statistics(DAY, false, durations);
                     show_statistics(WEEK, false, durations);
                 } else { /// New month
-                    size_t month_end_date = boost::gregorian::date(last_year_number, last_month_number, 1).end_of_month().day();
+                    u_short month_end_date = boost::gregorian::date(last_year_number, last_month_number, 1).end_of_month().day();
                     update_durations_month_ending(durations, {last_year_number, last_month_number, month_end_date});
                     show_statistics(DAY, false, durations);
                     show_statistics(WEEK, false, durations);
                     show_statistics(MONTH, false, durations);
                 }
 
-                first_active_date_in_week = start; // Preserve new week start active date
+                //first_active_date_in_week = start; // Preserve new week start active date
                 // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
                 start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
                                           (start.date().day_of_week() - analyze_properties.week_start_day + (start.date().day_of_week() - analyze_properties.week_start_day < 0 ? 7 : 0));
@@ -201,7 +208,7 @@ void activity_analyzer::analyze() const {
                 std::cout << std::endl;
             }
         } else {
-            first_active_date_in_week = start; // Preserve new week start active date
+            //first_active_date_in_week = start; // Preserve new week start active date
             // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
             start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
                                       (start.date().day_of_week() - analyze_properties.week_start_day + (start.date().day_of_week() - analyze_properties.week_start_day < 0 ? 7 : 0));
@@ -264,13 +271,14 @@ void activity_analyzer::analyze() const {
         durations["Week total"].duration += difference;
         durations["Month total"].duration += difference;
 
-        last_week_number = start.date().week_number();
+        /*last_week_number = start.date().week_number();
         last_day_number = start.date().day_of_week();
         if (last_day_number == 0) {
             last_week_number++;
-        }
+        }*/
         last_month_number = start.date().month();
         last_year_number = start.date().year();
+        is_first_line = false;
     }
 
     update_durations_week_ending(durations, start_week_date, stop.date().day_of_week() + 1);
@@ -282,7 +290,7 @@ void activity_analyzer::analyze() const {
     //}
 }
 
-void activity_analyzer::config_analyze_params(boost::date_time::weekdays week_start_day, float sleep_hours_per_day, float study_day_hours_in_week) {
+void activity_analyzer::config_analyze_params(boost::date_time::weekdays week_start_day, u_short sleep_hours_per_day, u_short study_day_hours_in_week) {
     analyze_properties.study_day_hours_in_week = study_day_hours_in_week;
     analyze_properties.sleep_hours_per_day = sleep_hours_per_day;
     analyze_properties.week_start_day = week_start_day;

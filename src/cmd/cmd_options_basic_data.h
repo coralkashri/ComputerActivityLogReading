@@ -20,8 +20,8 @@ struct cmd_options_basic_data {
     boost::program_options::variables_map variables_map;
 
     std::string week_start_day;
-    float sleep_hours_per_day;
-    float study_hours_in_week;
+    u_short sleep_hours_per_day;
+    u_short study_hours_in_week;
 };
 
 #endif //COMPUTERMONITORINGSTATISTICSPARSER_CMD_OPTIONS_DATA_H

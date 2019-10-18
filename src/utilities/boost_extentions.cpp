@@ -25,8 +25,8 @@ namespace boost {
             return datetime;
         }
 
-        size_t how_much_specific_days_past_in_month(size_t year, size_t month, std::vector<weekdays> days_to_count, size_t day_in_month) {
-            size_t res = 0;
+        u_short how_much_specific_days_past_in_month(size_t year, size_t month, std::vector<weekdays> days_to_count, u_short day_in_month) {
+            u_short res = 0;
             gregorian::date d(year, month, 1);
             for (size_t day = 1; day <= day_in_month; day++) {
                 if (find(days_to_count.begin(), days_to_count.end(), d.day_of_week()) != days_to_count.end())

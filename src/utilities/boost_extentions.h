@@ -27,7 +27,7 @@ namespace boost {
          *
          * @return How much wanted days passed until day_in_month in the specified month and year
          */
-        size_t how_much_specific_days_past_in_month(size_t year, size_t month, std::vector<weekdays> days_to_count, size_t day_in_month = 32);
+        u_short how_much_specific_days_past_in_month(size_t year, size_t month, std::vector<weekdays> days_to_count, u_short day_in_month = 32);
     }
 }
 

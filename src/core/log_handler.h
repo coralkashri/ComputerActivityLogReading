@@ -15,7 +15,7 @@ public:
             bool anomalies_verbose,
             const std::string &normal_login_word);
 
-    void config_analyzer_params(boost::date_time::weekdays week_start_day, float sleep_hours_per_day, float study_day_hours_in_week);
+    void config_analyzer_params(boost::date_time::weekdays week_start_day, u_short sleep_hours_per_day, u_short study_day_hours_in_week);
 
     void process();
 
