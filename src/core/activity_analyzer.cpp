@@ -10,8 +10,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
-#include "../utilities/std_extentions.h"
-#include "../utilities/boost_extentions.h"
+#include "../utilities/std_extensions.h"
+#include "../utilities/boost_extensions.h"
 #include "../utilities/design_text.h"
 
 using namespace design_text;
