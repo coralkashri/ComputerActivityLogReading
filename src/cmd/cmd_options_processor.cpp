@@ -1,6 +1,6 @@
 #include "cmd_options_processor.h"
 #include "../utilities/exceptions.h"
-#include "../usefull_collections/week.h"
+#include "../useful_collections/week.h"
 #include "../core/log_handler.h"
 #include <boost/filesystem.hpp>
 

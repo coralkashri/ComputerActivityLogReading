@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
-#include "usefull_collections/week.h"
+#include "useful_collections/week.h"
 #include "core/log_handler.h"
 #include "utilities/design_text.h"
 #include "cmd/cmd_options_parser.h"

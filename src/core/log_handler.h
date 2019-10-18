@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <boost/date_time.hpp>
-#include "time_container.h"
+#include "../useful_collections/time_container.h"
 #include "activity_analyzer.h"
 #include "anomalies_detector.h"
 
