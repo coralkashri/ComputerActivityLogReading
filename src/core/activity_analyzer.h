@@ -2,7 +2,7 @@
 #define COMPUTERMONITORINGSTATISTICSPARSER_ACTIVITY_ANALYZER_H
 
 #include <iostream>
-#include "variables.h"
+#include <boost/date_time/posix_time/ptime.hpp>
 #include "../useful_collections/time_container.h"
 
 class activity_analyzer {
@@ -32,6 +32,12 @@ public:
     void config_analyze_params(boost::date_time::weekdays week_start_day, u_short sleep_hours_per_day, u_short study_day_hours_in_week);
 
 private:
+    struct base_variables {
+        u_short study_day_hours_in_week;
+        u_short sleep_hours_per_day;
+        u_short hours_per_day;
+        boost::date_time::weekdays week_start_day;
+    };
 
     std::map<std::string, time_container> filter_times_container_by_level(TimeContainerLevel level, std::map<std::string, time_container> &durations) const;
 
