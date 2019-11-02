@@ -160,7 +160,11 @@ void activity_analyzer::update_durations_month_ending(std::map<std::string, time
     // Calculate month Study-day usage percents
     u_short study_days_until_now_in_month = boost::date_time::how_much_specific_days_past_in_month(data.year, data.month, {boost::date_time::weekdays::Thursday}, data.day);
     u_short study_day_hours_in_month = analyze_properties.study_day_hours_in_week * study_days_until_now_in_month;
-    durations["Month Study-day percents"].duration = durations["Month Study-day total"].duration / study_day_hours_in_month;
+    if (study_day_hours_in_month) {
+        durations["Month Study-day percents"].duration = durations["Month Study-day total"].duration / study_day_hours_in_month;
+    } else {
+        durations["Month Study-day percents"].duration = boost::posix_time::time_duration(1, 0, 0);
+    }
 }
 
 void activity_analyzer::analyze() const {
@@ -177,11 +181,13 @@ void activity_analyzer::analyze() const {
     last_month_number = last_year_number = 0;
     bool is_first_line = true;
 
-    auto update_week_start_stop_date = [&start, wsd = analyze_properties.week_start_day, &start_week_date, &end_week_date] {
+    auto update_week_start_stop_date = [&start, wsd = analyze_properties.week_start_day, &start_week_date, &end_week_date, &last_month_number, &last_year_number] {
         // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
         start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
                                   (start.date().day_of_week() - wsd + (start.date().day_of_week() - wsd < 0 ? 7 : 0));
         end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7; // Calculate week's end date
+        last_month_number = start.date().month(); // Update last month by start week's date month number
+        last_year_number = start.date().year(); // Update last year by start week's date year number
     };
 
     while (std::getline(log_file, datetime, '+')) {
@@ -266,15 +272,20 @@ void activity_analyzer::analyze() const {
         durations["Week total"].duration += difference;
         durations["Month total"].duration += difference;
 
-        last_month_number = start.date().month();
-        last_year_number = start.date().year();
         is_first_line = false;
     }
 
     update_durations_week_ending(durations, start_week_date, stop.date().day_of_week() + 1);
     show_statistics(DAY, true, durations);
     show_statistics(WEEK, true, durations);
-    update_durations_month_ending(durations, {last_year_number, last_month_number, stop.date().day()});
+    if (last_month_number != stop.date().month()) {
+        // In this case, the week began in month x and, ended in month x+1.
+        // Means that we need to display last month calculations, alongside current month calculations.
+        u_short month_end_date = boost::gregorian::date(last_year_number, last_month_number, 1).end_of_month().day();
+        update_durations_month_ending(durations, {last_year_number, last_month_number, month_end_date});
+        show_statistics(MONTH, false, durations);
+    }
+    update_durations_month_ending(durations, {last_year_number, stop.date().month(), stop.date().day()});
     show_statistics(MONTH, true, durations);
 }
 
