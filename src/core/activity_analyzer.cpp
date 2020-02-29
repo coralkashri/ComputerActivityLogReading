@@ -182,15 +182,6 @@ void activity_analyzer::analyze() const {
     last_month_number = last_year_number = 0;
     bool is_first_line = true;
 
-    auto update_week_start_stop_date = [&start, wsd = analyze_properties.week_start_day, &start_week_date, &end_week_date, &last_month_number, &last_year_number] {
-        // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
-        start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
-                                  (start.date().day_of_week() - wsd + (start.date().day_of_week() - wsd < 0 ? 7 : 0));
-        end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7; // Calculate week's end date
-        last_month_number = start.date().month(); // Update last month by start week's date month number
-        last_year_number = start.date().year(); // Update last year by start week's date year number
-    };
-
     while (std::getline(log_file, datetime, '+')) {
         /// Get activity description
         // TODO std::getline(log_file, activity_description, '\n');
@@ -200,9 +191,9 @@ void activity_analyzer::analyze() const {
         start = boost::date_time::extract_datetime(datetime);
 
         if (!is_first_line) { /// Ignore calculations on the very first line in the file
-            check_and_trigger_if_new_analyze_section(start, end_week_date, start_week_date, durations, last_month_number, last_year_number, update_week_start_stop_date);
+            check_and_trigger_if_new_analyze_section(start, end_week_date, start_week_date, durations, last_month_number, last_year_number);
         } else {
-            update_week_start_stop_date();
+            update_week_start_stop_date(start, start_week_date, end_week_date, last_month_number, last_year_number);
         }
         detailed_streamer << start << " - ";
         boost::posix_time::time_duration difference;
@@ -239,9 +230,9 @@ void activity_analyzer::config_analyze_params(boost::date_time::weekdays week_st
     analyze_properties.week_start_day = week_start_day;
 }
 
-void activity_analyzer::check_and_trigger_if_new_analyze_section(const time_var &start_date, const time_var &end_week_date, const time_var &start_week_date,
+void activity_analyzer::check_and_trigger_if_new_analyze_section(const time_var &start_date, time_var &end_week_date, time_var &start_week_date,
                                                                                                    std::map<std::string, time_container> &durations, u_short last_month_number,
-                                                                                                   u_short last_year_number, void (*update_week_start_stop_date)() const) const {
+                                                                                                   u_short last_year_number) const {
     if (start_date.date() >= end_week_date.date()) {
         update_durations_week_ending(durations, start_week_date, 7);
 
@@ -255,7 +246,7 @@ void activity_analyzer::check_and_trigger_if_new_analyze_section(const time_var 
             show_statistics(WEEK, false, durations);
             show_statistics(MONTH, false, durations);
         }
-        update_week_start_stop_date();
+        update_week_start_stop_date(start_date, start_week_date, end_week_date, last_month_number, last_year_number);
         std::cout << std::endl;
     }
 }
@@ -318,6 +309,16 @@ void activity_analyzer::read_and_analyze_stop_time_from_log_file(std::ifstream &
     } else {
         is_current = true;
         // Current point in time
-        stop = boost::date_time::second_clock::local_time();
+        stop = boost::posix_time::second_clock::local_time();
     }
+}
+
+void activity_analyzer::update_week_start_stop_date (const boost::posix_time::ptime &start, boost::posix_time::ptime &start_week_date, boost::posix_time::ptime &end_week_date, u_short &last_month_number, u_short &last_year_number) const {
+    // Move the previous_start_date to the start of the week (if the user was inactive during the very first day of the week).
+    const auto wsd = analyze_properties.week_start_day;
+    start_week_date = start - boost::posix_time::time_duration(24, 0, 0) *
+                              (start.date().day_of_week() - wsd + (start.date().day_of_week() - wsd < 0 ? 7 : 0));
+    end_week_date = start_week_date + boost::posix_time::time_duration(24, 0, 0) * 7; // Calculate week's end date
+    last_month_number = start.date().month(); // Update last month by start week's date month number
+    last_year_number = start.date().year(); // Update last year by start week's date year number
 }

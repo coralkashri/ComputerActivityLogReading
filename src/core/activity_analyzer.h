@@ -55,18 +55,18 @@ private:
      */
     void update_durations_week_ending(std::map<std::string, time_container> &durations, boost::posix_time::ptime start_week_date, size_t current_day) const;
 
-     /**
-      *
-      * @param durations - durations map to update
-      * @param data ->
-     *          day - current day in month
-     *          month - current month
-     *          year - current year
-     */
+    /**
+     *
+     * @param durations - durations map to update
+     * @param data ->
+    *          day - current day in month
+    *          month - current month
+    *          year - current year
+    */
     void update_durations_month_ending(std::map<std::string, time_container> &durations, boost::gregorian::date::ymd_type data) const;
 
-    void check_and_trigger_if_new_analyze_section(const boost::posix_time::ptime &start_date, const boost::posix_time::ptime &end_week_date, const boost::posix_time::ptime &start_week_date,
-                                             std::map<std::string, time_container> &durations, u_short last_month_number, u_short last_year_number, void (*update_week_start_stop_date)() const) const;
+    void check_and_trigger_if_new_analyze_section(const boost::posix_time::ptime &start_date, boost::posix_time::ptime &end_week_date, boost::posix_time::ptime &start_week_date,
+                                                  std::map<std::string, time_container> &durations, u_short last_month_number, u_short last_year_number) const;
 
     void summarise_log_analyzing(const boost::posix_time::ptime &stop, const boost::posix_time::ptime &start_week_date, std::map<std::string, time_container> &durations, u_short last_month_number,
                                  u_short last_year_number) const;
@@ -76,6 +76,9 @@ private:
     void print_detailed_times_analyzed_line(const boost::posix_time::ptime &stop, const boost::posix_time::time_duration &difference, bool is_current) const;
 
     void read_and_analyze_stop_time_from_log_file(std::ifstream &log_file, boost::posix_time::ptime &stop, std::string &datetime, bool &is_current) const;
+
+    void update_week_start_stop_date(const boost::posix_time::ptime &start, boost::posix_time::ptime &start_week_date, boost::posix_time::ptime &end_week_date, u_short &last_month_number,
+                                     u_short &last_year_number) const;
 
     std::string log_path;
     base_variables analyze_properties;
