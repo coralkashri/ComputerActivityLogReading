@@ -174,6 +174,7 @@ void activity_analyzer::analyze() const {
     time_var start_week_date;
     time_var end_week_date;
     std::string datetime;
+    std::string activity_description;
 
     std::map<std::string, time_container> durations = create_durations_container();
     u_short last_month_number;
@@ -191,79 +192,33 @@ void activity_analyzer::analyze() const {
     };
 
     while (std::getline(log_file, datetime, '+')) {
+        /// Get activity description
+        // TODO std::getline(log_file, activity_description, '\n');
+        log_file.ignore(256, '\n'); // TODO remove this line
+
         /// Read date-time from log
-        log_file.ignore(256, '\n');
         start = boost::date_time::extract_datetime(datetime);
 
         if (!is_first_line) { /// Ignore calculations on the very first line in the file
-            if (start.date() >= end_week_date.date()) {
-                update_durations_week_ending(durations, start_week_date, 7);
-
-                if (last_month_number == start.date().month()) {
-                    show_statistics(DAY, false, durations);
-                    show_statistics(WEEK, false, durations);
-                } else { /// New month
-                    u_short month_end_date = boost::gregorian::date(last_year_number, last_month_number, 1).end_of_month().day();
-                    update_durations_month_ending(durations, {last_year_number, last_month_number, month_end_date});
-                    show_statistics(DAY, false, durations);
-                    show_statistics(WEEK, false, durations);
-                    show_statistics(MONTH, false, durations);
-                }
-                update_week_start_stop_date();
-                std::cout << std::endl;
-            }
+            check_and_trigger_if_new_analyze_section(start, end_week_date, start_week_date, durations, last_month_number, last_year_number, update_week_start_stop_date);
         } else {
             update_week_start_stop_date();
         }
         detailed_streamer << start << " - ";
         boost::posix_time::time_duration difference;
         bool is_current; // Is current point in time
-        if (std::getline(log_file, datetime, '+')) {
-            is_current = false;
-            /// Read date-time from log
-            log_file.ignore(256, '\n');
-            stop = boost::date_time::extract_datetime(datetime);
-        } else {
-            is_current = true;
-            // Current point in time
-            stop = boost::posix_time::second_clock::local_time();
-        }
+        read_and_analyze_stop_time_from_log_file(log_file, stop, datetime, is_current); // Read stop
         difference = stop - start;
-        if (!is_current) {
-            detailed_streamer << stop << ": " << difference << std::endl;
-        } else {
-            detailed_streamer << "Now: " << difference << std::endl;
-            // After the `while-loop` the current statistics will be shown
-        }
+        print_detailed_times_analyzed_line(stop, difference, is_current); // Print "stop: difference" | "Now: difference"
 
         if (start.date().day_of_week() < 4) {
-            /// Until thursday
+            /// Until Wednesday
             durations["Daily total until Wednesday"].duration += difference;
         }
         if (start.date().day_of_week() == 4) {
             /// Thursday
             durations["Thursday total"].duration += difference;
-            boost::posix_time::ptime studyday_start(start.date()), studyday_stop(start.date());
-            studyday_start += boost::posix_time::time_duration(13, 0, 0);
-            studyday_stop += boost::posix_time::time_duration(18, 0, 0);
-
-            if (start < studyday_stop && stop > studyday_start) {
-                /// Study-day range
-                boost::posix_time::ptime actual_study_start, actual_study_stop;
-                if (studyday_start - start >= boost::posix_time::time_duration(0, 0, 0)) {
-                    actual_study_start = studyday_start;
-                } else {
-                    actual_study_start = start;
-                }
-
-                if (studyday_stop - stop <= boost::posix_time::time_duration(0, 0, 0)) {
-                    actual_study_stop = studyday_stop;
-                } else {
-                    actual_study_stop = stop;
-                }
-                // Calculate total week Study-day
-                durations["Thursday hours from Study-day"].duration += actual_study_stop - actual_study_start;
-            }
+            analyze_study_hours(stop, start, durations);
         }
         if (start.date().day_of_week() > 4) {
             /// Friday - Saturday
@@ -275,6 +230,38 @@ void activity_analyzer::analyze() const {
         is_first_line = false;
     }
 
+    summarise_log_analyzing(stop, start_week_date, durations, last_month_number, last_year_number);
+}
+
+void activity_analyzer::config_analyze_params(boost::date_time::weekdays week_start_day, u_short sleep_hours_per_day, u_short study_day_hours_in_week) {
+    analyze_properties.study_day_hours_in_week = study_day_hours_in_week;
+    analyze_properties.sleep_hours_per_day = sleep_hours_per_day;
+    analyze_properties.week_start_day = week_start_day;
+}
+
+void activity_analyzer::check_and_trigger_if_new_analyze_section(const time_var &start_date, const time_var &end_week_date, const time_var &start_week_date,
+                                                                                                   std::map<std::string, time_container> &durations, u_short last_month_number,
+                                                                                                   u_short last_year_number, void (*update_week_start_stop_date)() const) const {
+    if (start_date.date() >= end_week_date.date()) {
+        update_durations_week_ending(durations, start_week_date, 7);
+
+        if (last_month_number == start_date.date().month()) {
+            show_statistics(DAY, false, durations);
+            show_statistics(WEEK, false, durations);
+        } else { /// New month
+            u_short month_end_date = boost::gregorian::date(last_year_number, last_month_number, 1).end_of_month().day();
+            update_durations_month_ending(durations, {last_year_number, last_month_number, month_end_date});
+            show_statistics(DAY, false, durations);
+            show_statistics(WEEK, false, durations);
+            show_statistics(MONTH, false, durations);
+        }
+        update_week_start_stop_date();
+        std::cout << std::endl;
+    }
+}
+
+void activity_analyzer::summarise_log_analyzing(const time_var &stop, const time_var &start_week_date, std::map<std::string, time_container> &durations, u_short last_month_number,
+                                                u_short last_year_number) const {
     update_durations_week_ending(durations, start_week_date, stop.date().day_of_week() + 1);
     show_statistics(DAY, true, durations);
     show_statistics(WEEK, true, durations);
@@ -289,8 +276,48 @@ void activity_analyzer::analyze() const {
     show_statistics(MONTH, true, durations);
 }
 
-void activity_analyzer::config_analyze_params(boost::date_time::weekdays week_start_day, u_short sleep_hours_per_day, u_short study_day_hours_in_week) {
-    analyze_properties.study_day_hours_in_week = study_day_hours_in_week;
-    analyze_properties.sleep_hours_per_day = sleep_hours_per_day;
-    analyze_properties.week_start_day = week_start_day;
+void activity_analyzer::analyze_study_hours(const time_var &stop, time_var &start, std::map<std::string, time_container> &durations) const {
+    boost::posix_time::ptime studyday_start(start.date()), studyday_stop(start.date());
+    studyday_start += boost::posix_time::time_duration(13, 0, 0);
+    studyday_stop += boost::posix_time::time_duration(18, 0, 0);
+
+    if (start < studyday_stop && stop > studyday_start) {
+        /// Study-day range
+        boost::posix_time::ptime actual_study_start, actual_study_stop;
+        if (studyday_start - start >= boost::posix_time::time_duration(0, 0, 0)) {
+            actual_study_start = studyday_start;
+        } else {
+            actual_study_start = start;
+        }
+
+        if (studyday_stop - stop <= boost::posix_time::time_duration(0, 0, 0)) {
+            actual_study_stop = studyday_stop;
+        } else {
+            actual_study_stop = stop;
+        }
+        // Calculate total week Study-day
+        durations["Thursday hours from Study-day"].duration += actual_study_stop - actual_study_start;
+    }
+}
+
+void activity_analyzer::print_detailed_times_analyzed_line(const time_var &stop, const boost::posix_time::time_duration &difference, bool is_current) const {
+    if (!is_current) {
+        detailed_streamer << stop << ": " << difference << std::endl;
+    } else {
+        detailed_streamer << "Now: " << difference << std::endl;
+        // After the `while-loop` the current statistics will be shown
+    }
+}
+
+void activity_analyzer::read_and_analyze_stop_time_from_log_file(std::ifstream &log_file, time_var &stop, std::string &datetime, bool &is_current) const {
+    if (getline(log_file, datetime, '+')) {
+        is_current = false;
+        /// Read date-time from log
+        log_file.ignore(256, '\n');
+        stop = boost::date_time::extract_datetime(datetime);
+    } else {
+        is_current = true;
+        // Current point in time
+        stop = boost::date_time::second_clock::local_time();
+    }
 }

@@ -53,7 +53,7 @@ private:
      * @param start_week_date - the date the week started on
      * @param current_day - Counting from 1 => Sunday = 1, Monday = 2, etc.
      */
-    void update_durations_week_ending(std::map<std::string, time_container> &durations, boost::posix_time::ptime start_week_date, size_t current_day) const ;
+    void update_durations_week_ending(std::map<std::string, time_container> &durations, boost::posix_time::ptime start_week_date, size_t current_day) const;
 
      /**
       *
@@ -63,7 +63,19 @@ private:
      *          month - current month
      *          year - current year
      */
-    void update_durations_month_ending(std::map<std::string, time_container> &durations, boost::gregorian::date::ymd_type data) const ;
+    void update_durations_month_ending(std::map<std::string, time_container> &durations, boost::gregorian::date::ymd_type data) const;
+
+    void check_and_trigger_if_new_analyze_section(const boost::posix_time::ptime &start_date, const boost::posix_time::ptime &end_week_date, const boost::posix_time::ptime &start_week_date,
+                                             std::map<std::string, time_container> &durations, u_short last_month_number, u_short last_year_number, void (*update_week_start_stop_date)() const) const;
+
+    void summarise_log_analyzing(const boost::posix_time::ptime &stop, const boost::posix_time::ptime &start_week_date, std::map<std::string, time_container> &durations, u_short last_month_number,
+                                 u_short last_year_number) const;
+
+    void analyze_study_hours(const boost::posix_time::ptime &stop, boost::posix_time::ptime &start, std::map<std::string, time_container> &durations) const;
+
+    void print_detailed_times_analyzed_line(const boost::posix_time::ptime &stop, const boost::posix_time::time_duration &difference, bool is_current) const;
+
+    void read_and_analyze_stop_time_from_log_file(std::ifstream &log_file, boost::posix_time::ptime &stop, std::string &datetime, bool &is_current) const;
 
     std::string log_path;
     base_variables analyze_properties;
