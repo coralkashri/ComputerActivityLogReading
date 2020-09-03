@@ -2,6 +2,7 @@
 #define COMPUTERMONITORINGSTATISTICSPARSER_ACTIVITY_ANALYZER_H
 
 #include <iostream>
+#include <map>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "../useful_collections/time_container.h"
 

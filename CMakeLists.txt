@@ -12,11 +12,11 @@ set(BOOST_REQUIRED_COMPONENTS
         unit_test_framework
         program_options
         )
-find_package(Boost "1.54.0" REQUIRED ${BOOST_REQUIRED_COMPONENTS})
+find_package(Boost "1.74.0" REQUIRED ${BOOST_REQUIRED_COMPONENTS})
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
 
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*")
 
